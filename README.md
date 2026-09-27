@@ -1,6 +1,6 @@
 # Multi-Hop VPS Infrastructure
 
-**Two-node Linux infrastructure lab built on VPS servers with Xray, sing-box and 3x-ui.**
+**Two-node Linux VPS infrastructure lab with Xray, sing-box, SSH and network diagnostics.**
 
 🇷🇺 [Русская версия](#русская-версия) | 🇬🇧 [English version](#english-version)
 
@@ -10,13 +10,20 @@
 
 ## О проекте
 
-Это учебный инфраструктурный проект, в котором развёрнута двухузловая схема на двух VPS под управлением Ubuntu Server.
+Это учебный инфраструктурный проект на двух VPS под управлением Ubuntu Server.
 
-Проект используется как практическая работа по администрированию Linux, VPS, SSH, сетевым сервисам, анализу TCP-соединений и диагностике взаимодействия между пользовательскими сетевыми процессами.
+Проект создан как практическая работа по:
 
-Первый VPS используется как входной узел лабораторной схемы, второй — как внешний узел. Между серверами организовано отдельное межузловое соединение через `sing-box`.
+- администрированию Linux;
+- работе с VPS и SSH;
+- диагностике TCP-соединений;
+- анализу процессов и сокетов;
+- проверке маршрутизации;
+- документированию многокомпонентной инфраструктуры.
 
-> Репозиторий носит демонстрационный и учебный характер. В нём не публикуются реальные IP-адреса, UUID, ключи, пароли, токены, клиентские конфигурации, ссылки подключения и иные данные доступа.
+Первый VPS используется как входной узел, второй — как внешний узел. Между ними организовано межузловое соединение через `sing-box`.
+
+> В публичном репозитории не публикуются реальные IP-адреса, UUID, пароли, токены, клиентские конфигурации, строки подключения и другие данные доступа.
 
 ## Архитектура
 
@@ -47,25 +54,27 @@ Client
 +-----------------------------+
 ```
 
-Подробное описание: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+Подробное описание архитектуры:
+
+[`ARCHITECTURE.md`](ARCHITECTURE.md)
 
 ## Что было сделано
 
 - арендованы и настроены два VPS;
-- выполнено удалённое администрирование серверов по SSH;
+- выполнено удалённое администрирование по SSH;
 - использованы Ubuntu Server 22.04 и Ubuntu Server 24.04;
 - развёрнуты `3x-ui`, `Xray` и `sing-box`;
 - организовано межсерверное соединение между двумя узлами;
-- проверены активные TCP-соединения между VPS;
-- исследованы локальные соединения между Xray и sing-box;
-- проверены таблицы маршрутизации и policy routing;
-- проанализированы слушающие TCP/UDP-порты и процессы;
-- выполнена базовая диагностика ресурсов и состояния systemd-сервисов;
-- подтверждена работа межузловой связи по состоянию активных сокетов с обеих сторон.
+- проверены активные TCP-сессии с обеих сторон;
+- исследованы локальные loopback-соединения между процессами;
+- проанализированы слушающие TCP/UDP-порты;
+- проверены процессы, маршруты и policy routing;
+- проверена NAT-таблица;
+- выполнена базовая диагностика ресурсов и состояния systemd-сервисов.
 
-## Что удалось подтвердить диагностикой
+## Что удалось подтвердить
 
-На входном узле была подтверждена цепочка:
+По состоянию работающей системы была подтверждена следующая высокоуровневая цепочка:
 
 ```text
 Xray
@@ -80,9 +89,9 @@ sing-box
 remote VPS
 ```
 
-На втором VPS одновременно наблюдались соответствующие `ESTABLISHED`-соединения, обслуживаемые `sing-box`.
+На втором VPS одновременно наблюдались соответствующие соединения в состоянии `ESTABLISHED`, обслуживаемые `sing-box`.
 
-Это позволило проверить фактическое взаимодействие узлов без публикации рабочих конфигураций.
+Это позволило подтвердить фактическое взаимодействие узлов без публикации рабочих конфигураций.
 
 ## Технологии
 
@@ -105,7 +114,7 @@ remote VPS
 
 ## Диагностика
 
-В проекте использовались стандартные инструменты Linux:
+В ходе анализа использовались стандартные Linux-инструменты:
 
 ```bash
 hostname
@@ -114,33 +123,54 @@ uptime -p
 free -h
 df -h /
 systemctl status x-ui
+ps -ef
 ss -tulpn
 ss -ntp
+lsof -nP -iTCP:<port>
 ip route
 ip rule
 iptables -t nat -S
-lsof -nP -iTCP
-ps -ef
 ```
 
-Подробнее: [`docs/VERIFICATION.md`](docs/VERIFICATION.md)
+Подробное описание проверки инфраструктуры:
+
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md)
+
+## Скриншоты
+
+В папке [`screenshots`](screenshots/) находятся обезличенные скриншоты диагностики:
+
+- `entry-system-info.png` — информация о входном VPS;
+- `exit-system-info.png` — информация о внешнем VPS;
+- `entry-loopback-chain.png` — локальное взаимодействие Xray и sing-box;
+- `inter-node-connection.png` — обезличенное активное соединение между узлами.
+
+Реальные публичные IP-адреса и рабочие endpoint-значения на скриншотах скрыты.
 
 ## Безопасность публикации
 
-В публичной версии намеренно отсутствуют:
+В репозиторий намеренно не включены:
 
-- реальные IP-адреса серверов;
-- UUID и другие идентификаторы клиентов;
-- пароли и токены;
-- SSH-ключи;
+- реальные IP-адреса VPS;
+- UUID и клиентские идентификаторы;
+- пароли;
+- токены;
+- SSH private keys;
 - адреса административных панелей;
 - реальные клиентские конфигурации;
 - готовые строки подключения;
 - приватные сертификаты и ключи.
 
-Репозиторий не содержит готовых конфигураций для подключения и не предназначен как инструкция по получению доступа к каким-либо ограниченным ресурсам.
+Также в дальнейшем планируется усилить конфигурацию серверов:
 
-Подробнее: [`SECURITY.md`](SECURITY.md)
+- настроить host-based firewall;
+- ограничить административные сервисы;
+- использовать SSH-аутентификацию по ключам;
+- отключить password authentication после проверки ключевого доступа;
+- запретить прямой root-login по SSH;
+- добавить Fail2ban;
+- включить автоматические security updates;
+- регулярно проверять список слушающих сервисов.
 
 ## Структура репозитория
 
@@ -148,42 +178,29 @@ ps -ef
 multi-hop-vps-infrastructure/
 ├── README.md
 ├── ARCHITECTURE.md
-├── SECURITY.md
 ├── .gitignore
 ├── docs/
 │   └── VERIFICATION.md
 └── screenshots/
-    ├── README.md
     ├── entry-system-info.png
     ├── exit-system-info.png
     ├── entry-loopback-chain.png
     └── inter-node-connection.png
 ```
 
-## Что проект показывает
+## Что проект демонстрирует
 
-Проект демонстрирует практический опыт:
+Проект показывает практический опыт:
 
 - работы с удалёнными Linux-серверами;
 - администрирования VPS;
-- работы с SSH;
+- использования SSH;
 - диагностики процессов и сетевых соединений;
 - анализа маршрутизации;
 - работы с несколькими сетевыми сервисами;
-- документирования двухузловой инфраструктуры;
-- безопасной публикации технической документации без раскрытия рабочих секретов.
-
-## Планы развития
-
-- настроить host-based firewall;
-- ограничить административные сервисы;
-- перейти на SSH-ключи и отключить парольный вход;
-- запретить прямой root-login по SSH;
-- добавить Fail2ban;
-- настроить автоматические security updates;
-- добавить базовый мониторинг и уведомления;
-- документировать резервное копирование конфигураций;
-- регулярно проверять список слушающих сервисов.
+- проверки runtime-состояния инфраструктуры;
+- технического документирования;
+- безопасной публикации проекта без раскрытия секретов.
 
 ---
 
@@ -191,13 +208,20 @@ multi-hop-vps-infrastructure/
 
 ## About
 
-This is a small infrastructure lab implementing a two-node setup on two Ubuntu VPS servers.
+This is a small infrastructure lab built on two Ubuntu VPS servers.
 
-The project is intended as hands-on practice with Linux administration, VPS hosting, SSH, network services, TCP session analysis and troubleshooting of interactions between user-space networking processes.
+The project was created as hands-on practice with:
 
-The first VPS acts as an entry node in the lab topology, while the second VPS acts as an external node. A dedicated inter-node connection is handled through `sing-box`.
+- Linux administration;
+- VPS and SSH;
+- TCP connection diagnostics;
+- process and socket analysis;
+- routing inspection;
+- infrastructure documentation.
 
-> The repository is for portfolio and educational documentation only. It does not publish real IP addresses, UUIDs, credentials, tokens, client configuration files, connection strings or other access data.
+The first VPS acts as an entry node, while the second VPS acts as an external node. An inter-node connection is handled through `sing-box`.
+
+> The public repository intentionally excludes real IP addresses, UUIDs, credentials, tokens, client configurations, connection strings and other access data.
 
 ## Architecture
 
@@ -228,7 +252,9 @@ Client
 +-----------------------------+
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md).
+See:
+
+[`ARCHITECTURE.md`](ARCHITECTURE.md)
 
 ## Implemented
 
@@ -236,15 +262,17 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md).
 - administered both systems remotely over SSH;
 - used Ubuntu Server 22.04 and Ubuntu Server 24.04;
 - deployed `3x-ui`, `Xray` and `sing-box`;
-- established an inter-node connection between the two VPS nodes;
+- established an inter-node connection between the two nodes;
 - verified active TCP sessions on both systems;
-- investigated local Xray-to-sing-box communication;
-- inspected routing and policy-routing state;
-- inspected listening TCP/UDP sockets and owning processes;
-- checked host resources and systemd service health;
-- verified inter-node connectivity from live socket state on both sides.
+- investigated local loopback communication between processes;
+- inspected listening TCP/UDP sockets;
+- inspected processes, routes and policy-routing state;
+- checked the NAT table;
+- performed basic resource and systemd service diagnostics.
 
-## Verified runtime path
+## Verified runtime relationship
+
+Runtime inspection confirmed the following high-level chain:
 
 ```text
 Xray
@@ -259,7 +287,9 @@ sing-box
 remote VPS
 ```
 
-The second VPS simultaneously showed matching `ESTABLISHED` sessions handled by `sing-box`.
+The second VPS simultaneously showed corresponding `ESTABLISHED` sessions handled by `sing-box`.
+
+This provided runtime evidence of communication between the two nodes without exposing working configuration data.
 
 ## Technologies
 
@@ -282,33 +312,88 @@ The second VPS simultaneously showed matching `ESTABLISHED` sessions handled by 
 
 ## Verification
 
-See [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
+Standard Linux tools were used during the investigation:
+
+```bash
+hostname
+uname -r
+uptime -p
+free -h
+df -h /
+systemctl status x-ui
+ps -ef
+ss -tulpn
+ss -ntp
+lsof -nP -iTCP:<port>
+ip route
+ip rule
+iptables -t nat -S
+```
+
+Detailed verification notes:
+
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md)
+
+## Screenshots
+
+The [`screenshots`](screenshots/) directory contains sanitized diagnostic screenshots:
+
+- `entry-system-info.png` — entry VPS system information;
+- `exit-system-info.png` — external VPS system information;
+- `entry-loopback-chain.png` — local Xray-to-sing-box communication;
+- `inter-node-connection.png` — sanitized active connection between the two nodes.
+
+Real public IP addresses and working endpoint values are redacted.
 
 ## Publication safety
 
-The public repository intentionally excludes:
+The repository intentionally excludes:
 
-- real server IP addresses;
+- real VPS IP addresses;
 - client UUIDs and identifiers;
-- passwords and tokens;
+- passwords;
+- tokens;
 - SSH private keys;
 - administration-panel addresses;
 - real client configuration files;
 - ready-to-use connection strings;
 - private certificates and keys.
 
-The repository does not provide ready-to-use connection profiles and is not intended as a guide for accessing restricted resources.
+Planned hardening improvements include:
 
-See [`SECURITY.md`](SECURITY.md).
+- configuring a host-based firewall;
+- restricting administrative services;
+- using SSH key authentication;
+- disabling password authentication after key-based access is verified;
+- disabling direct root SSH login;
+- adding Fail2ban;
+- enabling automatic security updates;
+- regularly reviewing listening services.
 
-## Roadmap
+## Repository structure
 
-- configure a host-based firewall;
-- restrict administrative services;
-- use SSH key authentication and disable password authentication;
-- disable direct root SSH login;
-- add Fail2ban;
-- enable automatic security updates;
-- add basic monitoring and alerting;
-- document configuration backups;
-- periodically audit listening services.
+```text
+multi-hop-vps-infrastructure/
+├── README.md
+├── ARCHITECTURE.md
+├── .gitignore
+├── docs/
+│   └── VERIFICATION.md
+└── screenshots/
+    ├── entry-system-info.png
+    ├── exit-system-info.png
+    ├── entry-loopback-chain.png
+    └── inter-node-connection.png
+```
+
+## What this project demonstrates
+
+- remote Linux server administration;
+- VPS management;
+- SSH usage;
+- process and network troubleshooting;
+- routing analysis;
+- multi-service Linux networking;
+- runtime infrastructure verification;
+- technical documentation;
+- safe publication without exposing production secrets.
