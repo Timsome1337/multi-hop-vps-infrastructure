@@ -1,0 +1,23 @@
+*.key
+*.pem
+*.p12
+*.pfx
+*.env
+.env*
+config.json
+*.conf
+*.yaml
+*.yml
+id_rsa
+id_ed25519
+*.log
+*.tmp
+screenshots/raw/
+
+# Additional sensitive exports
+*subscription*
+*client*
+*.mobileconfig
+*.ovpn
+*.db
+*.sqlite
